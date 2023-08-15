@@ -1,6 +1,14 @@
+let APP_ID = "22312851a2bf43578977bbd9317185f4";
+
+let token = null;
+let uid = String(Math.floor(Math.random()*10000))
+
 let localStream;
 let remoteStream;
 let peerConnection;
+
+let client;
+let channel;
 
 const servers = {
     iceServers:[
@@ -11,6 +19,8 @@ const servers = {
 }
 
 let init = async() =>{
+    client = await Agora
+
     localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
     document.getElementById("user-1").srcObject = localStream;
     createOffer()
