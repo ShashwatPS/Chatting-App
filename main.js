@@ -19,14 +19,31 @@ const servers = {
 }
 
 let init = async() =>{
-    client = await Agora
+    client = await AgoraRTM.createInstance(APP_ID)
+    await client.login({uid,token})
+
+    channel = client.createChannel('main')
+    await channel.join()
+
+    channel.on('MemberJoined',handleUserJoined)
+
+    client.on('MessageFromPeer', handleMessageFromPeer)
 
     localStream = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
     document.getElementById("user-1").srcObject = localStream;
-    createOffer()
 }
 
-let createOffer = async() =>{
+let handleMessageFromPeer = async (message, MemberId) => {
+    message = JSON.parse(message.text);
+    console.log('Message:', message)
+}
+
+let handleUserJoined = async (MemberId) => {
+    console.log('A new user joined the channel:', MemberId)
+    createOffer(MemberId)
+}
+
+let createOffer = async(MemberId) =>{
     peerConnection = new RTCPeerConnection(servers)
     remoteStream = new MediaStream();
     document.getElementById("user-2").srcObject = remoteStream;
@@ -43,14 +60,14 @@ let createOffer = async() =>{
 
     peerConnection.onicecandidate = async (event) =>{
         if(event.candidate){
-            console.log("New ICE Candidate:", event.candidate)
+            client.sendMessageToPeer({text:JSON.stringify({'type':'canditate','candidate':event.candidate})}, MemberId)
         }
     }
 
     let offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
-    console.log("Offer :", offer);
+    client.sendMessageToPeer({text:JSON.stringify({'type':'offer','offer':offer})}, MemberId)
 }
 
 init();
